@@ -1,0 +1,36 @@
+from flask import Flask
+from flask_mysqldb import MySQL
+from flask_bcrypt import Bcrypt
+
+app = Flask(__name__)
+app.secret_key = '*******'
+
+# Настройка базы данных
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = '*****'
+app.config['MYSQL_DB'] = 'fashion'
+
+mysql = MySQL(app)
+bcrypt = Bcrypt(app)
+
+# Обновление паролей админов
+def hash_admin_passwords():
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM admins")
+    admins = cursor.fetchall()
+    for admin in admins:
+        admin_id = admin[0]
+        plain_password = admin[2]
+        hashed_password = bcrypt.generate_password_hash(plain_password).decode('utf-8')
+        cursor.execute(
+            "UPDATE admins SET password_hash = %s WHERE id = %s",
+            (hashed_password, admin_id)
+        )
+    mysql.connection.commit()
+    cursor.close()
+    print("Пароли админов успешно обновлены!")
+
+if __name__ == '__main__':
+    with app.app_context():
+        hash_admin_passwords()
