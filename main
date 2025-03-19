@@ -1,0 +1,508 @@
+
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField, FloatField, FileField, SelectField
+from wtforms.validators import DataRequired, Length, EqualTo, Optional, ValidationError
+from math import ceil
+from flask_wtf.file import FileRequired, FileAllowed
+from flask_mysqldb import MySQL
+from flask_bcrypt import Bcrypt
+import os
+from werkzeug.utils import secure_filename
+import re
+
+app = Flask(__name__)
+app.secret_key = '315zxcabc123'  # Секретный ключ для подписи сессии
+
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = '3839'
+app.config['MYSQL_DB'] = 'fashion'
+app.config['UPLOAD_FOLDER'] = 'static/images'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+
+mysql = MySQL(app)
+bcrypt = Bcrypt(app)
+
+# Настройка Flask-Login
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
+class FilterForm(FlaskForm):
+    category = SelectField('Тип товара', choices=[
+        ('Все', 'Все'),
+        ('Очки', 'Очки'),
+        ('Обувь', 'Обувь'),
+        ('Футболки', 'Футболки'),
+        ('Штаны', 'Штаны'),
+        ('Аксессуары', 'Аксессуары'),
+        ('Худи', 'Худи')
+    ], validators=[Optional()])
+    min_price = FloatField('Минимальная цена', validators=[Optional()])
+    max_price = FloatField('Максимальная цена', validators=[Optional()])
+    submit = SubmitField('Применить фильтры')
+class EditProductForm(FlaskForm):
+    name = StringField('Название товара', validators=[DataRequired()])
+    price = FloatField('Цена', validators=[DataRequired()])
+    category = SelectField('Тип товара', choices=[
+        ('Очки', 'Очки'),
+        ('Обувь', 'Обувь'),
+        ('Футболки', 'Футболки'),
+        ('Штаны', 'Штаны'),
+        ('Аксессуары', 'Аксессуары'),
+        ('Худи', 'Худи')
+    ], validators=[DataRequired()])
+    image = FileField('Изображение товара', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Только изображения!')
+    ])
+    submit = SubmitField('Сохранить изменения')
+class AddProductForm(FlaskForm):
+    name = StringField('Название товара', validators=[DataRequired()])
+    price = FloatField('Цена', validators=[DataRequired()])
+    category = SelectField('Тип товара', choices=[
+        ('Очки', 'Очки'),
+        ('Обувь', 'Обувь'),
+        ('Футболки', 'Футболки'),
+        ('Штаны', 'Штаны'),
+        ('Аксессуары', 'Аксессуары'),
+        ('Худи', 'Худи')
+    ], validators=[DataRequired()])
+    image = FileField('Изображение товара', validators=[
+        FileRequired(),  # Обязательное поле
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Только изображения!')
+    ])
+    submit = SubmitField('Добавить товар')
+
+
+# Модель пользователя
+class User(UserMixin):
+    def __init__(self, id, username, is_admin=False):
+        self.id = id
+        self.username = username
+        self.is_admin = is_admin
+
+# Функция для проверки сложности пароля
+def validate_password_complexity(form, field):
+    password = field.data
+    if not re.search(r'\d', password):
+        raise ValidationError('Пароль должен содержать хотя бы одну цифру.')
+    if not re.search(r'[A-Z]', password):
+        raise ValidationError('Пароль должен содержать хотя бы одну заглавную букву.')
+    if not re.search(r'[a-z]', password):
+        raise ValidationError('Пароль должен содержать хотя бы одну строчную букву.')
+    if re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        raise ValidationError('Пароль не должен содержать специальные символы.')
+
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+# Загрузка пользователя
+@login_manager.user_loader
+@login_manager.user_loader
+def load_user(user_id):
+    # Пытаемся загрузить обычного пользователя
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM users WHERE users_id = %s", (user_id,))
+    user = cursor.fetchone()
+    if user:
+        cursor.close()
+        return User(user[0], user[1])
+
+    # Пытаемся загрузить админа
+    cursor.execute("SELECT * FROM admins WHERE id = %s", (user_id,))
+    admin = cursor.fetchone()
+    cursor.close()
+    if admin:
+        return User(admin[0], admin[1], is_admin=True)
+
+class AdminLoginForm(FlaskForm):
+    username = StringField('Логин', validators=[DataRequired()])
+    password = PasswordField('Пароль', validators=[DataRequired()])
+    submit = SubmitField('Войти')
+
+# Форма регистрации
+class RegistrationForm(FlaskForm):
+    username = StringField('Логин', validators=[DataRequired(), Length(min=2, max=150)])
+    password = PasswordField('Пароль', validators=[
+        DataRequired(),
+        Length(min=8, message='Пароль должен быть не менее 8 символов.'),
+        validate_password_complexity
+    ])
+    confirm_password = PasswordField('Подтвердите пароль', validators=[
+        DataRequired(),
+        EqualTo('password', message='Пароли должны совпадать.')
+    ])
+    submit = SubmitField('Зарегистрироваться')
+
+# Форма входа
+class LoginForm(FlaskForm):
+    username = StringField('Логин', validators=[DataRequired()])
+    password = PasswordField('Пароль', validators=[DataRequired()])
+    submit = SubmitField('Войти')
+
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    form = AdminLoginForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT * FROM admins WHERE username = %s", (username,))
+        admin = cursor.fetchone()
+        cursor.close()
+
+        if admin and bcrypt.check_password_hash(admin[2], password):
+            admin_user = User(admin[0], admin[1], is_admin=True)
+            login_user(admin_user)
+            flash('Вы успешно вошли в систему!', 'success')
+            return redirect(url_for('admin'))
+        else:
+            flash('Неверный логин или пароль', 'danger')
+
+    return render_template('admin_login.html', form=form)
+
+# Выход для администраторов
+@app.route('/admin/logout')
+@login_required
+def admin_logout():
+    logout_user()
+    flash('Вы вышли из системы.', 'success')
+    return redirect(url_for('admin_login'))
+
+# Защищённая панель администратора
+@app.route('/admin')
+@login_required
+def admin():
+    if not current_user.is_admin:
+        flash('У вас нет прав доступа к этой странице.', 'danger')
+        return redirect(url_for('home'))
+
+    # Загрузка товаров из базы данных
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM products")
+    products = [tuple_to_dict(cursor, row) for row in cursor.fetchall()]
+    cursor.close()
+
+    form = AddProductForm()
+
+    return render_template('admin.html', products=products, form=form)
+
+
+
+@app.route('/admin/edit_product/<int:product_id>', methods=['GET', 'POST'])
+@login_required
+def edit_product(product_id):
+    if not current_user.is_admin:
+        flash('У вас нет прав доступа к этой странице.', 'danger')
+        return redirect(url_for('home'))
+
+    # Находим товар по ID
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM products WHERE id = %s", (product_id,))
+    product = tuple_to_dict(cursor, cursor.fetchone())
+    cursor.close()
+
+    if not product:
+        flash('Товар не найден.', 'danger')
+        return redirect(url_for('admin'))
+
+    form = EditProductForm()
+
+    if form.validate_on_submit():
+        name = form.name.data
+        price = form.price.data
+        category = form.category.data
+        image = form.image.data
+
+        # Если загружено новое изображение
+        if image and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
+        else:
+            filename = product['image_filename']  # Используем старое имя файла
+
+        # Обновляем товар в базе данных
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "UPDATE products SET name = %s, price = %s, category = %s, image_filename = %s WHERE id = %s",
+            (name, price, category, filename, product_id)
+        )
+        mysql.connection.commit()
+        cursor.close()
+
+        flash('Товар успешно обновлён!', 'success')
+        return redirect(url_for('admin'))
+
+    # Заполняем форму текущими данными товара
+    form.name.data = product['name']
+    form.price.data = product['price']
+    form.category.data = product['category']
+
+    return render_template('edit_product.html', form=form, product=product)
+# Главная страница
+@app.route('/')
+@login_required
+def home():
+    print(f"Текущий пользователь: {current_user.username}, ID: {current_user.id}")
+    return render_template('index.html', name=current_user.username)
+
+# Регистрация
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+
+        # Хеширование пароля
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+        # Сохранение пользователя в базу данных
+        cursor = mysql.connection.cursor()
+        try:
+            cursor.execute(
+                "INSERT INTO users (usersname, pswd) VALUES (%s, %s)",
+                (username, hashed_password)
+            )
+            mysql.connection.commit()
+            flash('Аккаунт успешно создан!', 'success')
+            return redirect(url_for('login'))
+        except mysql.connection.IntegrityError:
+            flash('Пользователь с таким именем уже существует.', 'danger')
+        finally:
+            cursor.close()
+    else:
+        # Если форма не прошла валидацию, выводим сообщения об ошибках
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"Ошибка в поле {getattr(form, field).label.text}: {error}", 'danger')
+
+    return render_template('register.html', form=form)
+
+# Вход
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT * FROM users WHERE usersname = %s", (username,))
+        user = cursor.fetchone()
+        cursor.close()
+
+        if user:
+            print(f"Найден пользователь: {user[1]}")  # Отладочное сообщение
+            if bcrypt.check_password_hash(user[2], password):
+                print("Пароль верный.")  # Отладочное сообщение
+                user_obj = User(user[0], user[1])
+                login_user(user_obj)
+                print(f"Пользователь {user_obj.username} успешно авторизован.")  # Отладочное сообщение
+                flash('Вы успешно вошли в систему!', 'success')
+                next_page = request.args.get('next')
+                if next_page:
+                    return redirect(next_page)
+                return redirect(url_for('home'))
+            else:
+                print("Неверный пароль.")  # Отладочное сообщение
+                flash('Неверный пароль.', 'danger')
+        else:
+            print("Пользователь не найден.")  # Отладочное сообщение
+            flash('Пользователь с таким именем не найден.', 'danger')
+
+    return render_template('login.html', form=form)
+# Выход
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+# Каталог
+@app.route('/catalog')
+def catalog():
+    search_query = request.args.get('search', '')
+    category_filter = request.args.get('category', 'Все')
+    min_price = request.args.get('min_price', type=float)
+    max_price = request.args.get('max_price', type=float)
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+
+    # Загрузка товаров из базы данных
+    cursor = mysql.connection.cursor()
+    query = "SELECT * FROM products WHERE 1=1"
+    params = []
+
+    # Фильтрация по поисковому запросу
+    if search_query:
+        query += " AND name LIKE %s"
+        params.append(f"%{search_query}%")
+
+    # Фильтрация по категории
+    if category_filter != 'Все':
+        query += " AND category = %s"
+        params.append(category_filter)
+
+    # Фильтрация по цене
+    if min_price is not None:
+        query += " AND price >= %s"
+        params.append(min_price)
+    if max_price is not None:
+        query += " AND price <= %s"
+        params.append(max_price)
+
+    # Пагинация
+    query += " LIMIT %s OFFSET %s"
+    params.extend([per_page, (page - 1) * per_page])
+
+    cursor.execute(query, params)
+    products = [tuple_to_dict(cursor, row) for row in cursor.fetchall()]
+    cursor.close()
+
+    # Общее количество товаров (для пагинации)
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT COUNT(*) FROM products")
+    total_products = cursor.fetchone()[0]
+    cursor.close()
+
+    total_pages = ceil(total_products / per_page)
+
+    # Форма фильтрации
+    form = FilterForm()
+    form.category.data = category_filter
+    form.min_price.data = min_price
+    form.max_price.data = max_price
+
+    return render_template('catalog.html', products=products, page=page, total_pages=total_pages, form=form)
+# Добавление товара в корзину
+@app.route('/add_to_cart/<int:product_id>', methods=['POST'])
+@login_required
+def add_to_cart(product_id):
+    # Находим товар по ID
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM products WHERE id = %s", (product_id,))
+    product = cursor.fetchone()
+    cursor.close()
+
+    if product:
+        # Преобразуем кортеж в словарь (если нужно)
+        product_dict = {
+            'id': product[0],
+            'name': product[1],
+            'price': product[2],
+            'category': product[3],
+            'image_filename': product[4]
+        }
+
+        # Инициализируем корзину в сессии, если её нет
+        if 'cart' not in session:
+            session['cart'] = []
+
+        # Добавляем товар в корзину
+        session['cart'].append(product_dict)
+        session.modified = True
+
+        flash('Товар добавлен в корзину!', 'success')
+    else:
+        flash('Товар не найден.', 'danger')
+
+    return redirect(url_for('catalog'))
+
+# Корзина
+@app.route('/cart')
+def cart():
+    cart = session.get('cart', [])
+    total_price = sum(float(item['price']) for item in cart)
+    total_items = len(cart)
+    return render_template('cart.html', cart=cart, total_price=total_price, total_items=total_items)
+
+# Удаление товара из корзины
+@app.route('/remove_from_cart/<int:product_id>', methods=['POST'])
+@login_required
+def remove_from_cart(product_id):
+    cart = session.get('cart', [])
+    cart = [item for item in cart if item['id'] != product_id]
+    session['cart'] = cart
+    flash('Товар удалён из корзины!', 'success')
+    return redirect(url_for('cart'))
+
+# Оформление заказа
+@app.route('/checkout')
+@login_required
+def checkout():
+    total = sum(item['price'] for item in session.get('cart', []))
+    session.pop('cart', None)  # Очистка корзины
+    flash('Заказ успешно оформлен!', 'success')
+    return redirect(url_for('home'))
+
+
+@app.route('/admin/add_product', methods=['GET', 'POST'])
+@login_required
+def add_product():
+    if not current_user.is_admin:
+        flash('У вас нет прав доступа к этой странице.', 'danger')
+        return redirect(url_for('home'))
+
+    form = AddProductForm()
+    if form.validate_on_submit():
+        name = form.name.data
+        price = form.price.data
+        category = form.category.data
+        image = form.image.data
+
+        if image and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
+
+            # Сохраняем товар в базу данных
+            cursor = mysql.connection.cursor()
+            cursor.execute(
+                "INSERT INTO products (name, price, category, image_filename) VALUES (%s, %s, %s, %s)",
+                (name, price, category, filename)
+            )
+            mysql.connection.commit()
+            cursor.close()
+
+            flash('Товар успешно добавлен!', 'success')
+            return redirect(url_for('admin'))
+        else:
+            flash('Недопустимый формат файла. Разрешены только PNG, JPG, JPEG, GIF.', 'danger')
+
+    return render_template('admin.html', form=form)
+
+@app.route('/admin/delete_product/<int:product_id>', methods=['POST'])
+@login_required
+def delete_product(product_id):
+    if not current_user.is_admin:
+        flash('У вас нет прав доступа к этой странице.', 'danger')
+        return redirect(url_for('home'))
+
+    # Удаляем товар из базы данных
+    cursor = mysql.connection.cursor()
+    cursor.execute("DELETE FROM products WHERE id = %s", (product_id,))
+    mysql.connection.commit()
+    cursor.close()
+
+    flash('Товар успешно удалён!', 'success')
+    return redirect(url_for('admin'))
+
+# Страница "Контакты"
+@app.route('/cont')
+def cont():
+    return render_template('cont.html')
+
+def tuple_to_dict(cursor, row):
+    """Преобразует кортеж в словарь."""
+    return {column[0]: value for column, value in zip(cursor.description, row)}
+
+# Запуск приложения
+if __name__ == '__main__':
+    app.run(debug=True)
