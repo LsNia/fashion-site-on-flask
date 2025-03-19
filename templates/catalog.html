@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comforter&family=Tiny5&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="comforter-regular">
+            <h1>BOLSHIE KURTKI</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Главная</a></li>
+                <li><a href="{{ url_for('cont') }}">Контакты</a></li>
+                <li><a href="/catalog">Каталог</a></li>
+                <li><a href="/cart">Корзина</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="container">
+        <!-- Форма поиска и фильтрации -->
+        <div class="filter-container">
+            <form method="GET" action="{{ url_for('catalog') }}" class="search-form">
+                <input type="text" name="search" placeholder="Поиск товаров..." value="{{ request.args.get('search', '') }}">
+                <button type="submit">Найти</button>
+            </form>
+            <form method="GET" action="{{ url_for('catalog') }}" class="filter-form">
+                {{ form.hidden_tag() }}
+                <div class="filter-group">
+                    {{ form.category.label }}<br>
+                    {{ form.category(class="form-control") }}
+                </div>
+                <div class="filter-group">
+                    {{ form.min_price.label }}<br>
+                    {{ form.min_price(class="form-control") }}
+                </div>
+                <div class="filter-group">
+                    {{ form.max_price.label }}<br>
+                    {{ form.max_price(class="form-control") }}
+                </div>
+                <div class="filter-group">
+                    <button type="submit" class="btn btn-primary">Применить фильтры</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Список товаров -->
+        <div class="product-list">
+            {% for product in products %}
+                <div class="product">
+                    <img src="{{ url_for('static', filename='images/' + product.image_filename) }}" alt="{{ product.name }}" class="product-image">
+                    <h3>{{ product.name }}</h3>
+                    <p>Цена: ₽{{ product.price }}</p>
+                    <p>Тип: {{ product.category }}</p>
+                    <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="POST">
+                        <button type="submit">Добавить в корзину</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Пагинация -->
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('catalog', page=page-1, search=request.args.get('search', ''), category=form.category.data, min_price=form.min_price.data, max_price=form.max_price.data) }}">Предыдущая</a>
+            {% endif %}
+
+            {% for p in range(1, total_pages + 1) %}
+                <a href="{{ url_for('catalog', page=p, search=request.args.get('search', ''), category=form.category.data, min_price=form.min_price.data, max_price=form.max_price.data) }}" {% if p == page %}class="active"{% endif %}>{{ p }}</a>
+            {% endfor %}
+
+            {% if page < total_pages %}
+                <a href="{{ url_for('catalog', page=page+1, search=request.args.get('search', ''), category=form.category.data, min_price=form.min_price.data, max_price=form.max_price.data) }}">Следующая</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
