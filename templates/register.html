@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="reg">
+    <header>
+        <h1>Регистрация</h1>
+    </header>
+
+    <!-- Блок для отображения общих сообщений (например, через flash()) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+<form method="POST">
+    <div class="containers">
+        {{ form.hidden_tag() }}
+
+        <!-- Поле username -->
+        <div class="form-group">
+            {{ form.username.label }}
+            {{ form.username(class="form-control") }}<br>
+            {% if form.username.errors %}
+                <div class="text-danger">
+                    {% for error in form.username.errors %}
+                        <small>{{ error }}</small><br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Поле password -->
+        <div class="form-group">
+            {{ form.password.label }}
+            {{ form.password(class="form-control") }}<br>
+            {% if form.password.errors %}
+                <div class="text-danger">
+                    {% for error in form.password.errors %}
+                        <small>{{ error }}</small><br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Поле confirm_password -->
+        <div class="form-group">
+            {{ form.confirm_password.label }}
+            {{ form.confirm_password(class="form-control") }}<br>
+            {% if form.confirm_password.errors %}
+                <div class="text-danger">
+                    {% for error in form.confirm_password.errors %}
+                        <small>{{ error }}</small><br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Кнопка отправки формы -->
+        <div class="form-group">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </div>
+</form>
+</body>
+</html>
