@@ -1,0 +1,555 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+header {
+    background: #333;
+    color: #fff;
+    padding: 20px 0;
+    text-align: center;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+}
+
+nav ul li a: hover {
+    background-color: #ddd;
+    color: black
+}
+
+.comforter-regular {
+  font-family: "Comforter", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+
+.hero {
+    background: url('https://i.ytimg.com/vi/8Zn89VJ01jQ/maxresdefault.jpg') no-repeat center center/cover;
+    color: #fff;
+    padding: 100px 20px;
+    text-align: center;
+}
+
+.cta-button {
+    background: #e74c3c;
+    color: #fff;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.services {
+    padding: 20px;
+    text-align: center;
+}
+
+.service {
+    background: #fff;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    background: #333;
+    color: #fff;
+}
+
+
+
+
+.log {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 5px;
+}
+
+.products {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+
+.product h2 {
+    font-size: 18px;
+}
+
+.product p {
+    font-size: 16px;
+}
+
+a {
+    text-decoration: none;
+    color: blue;
+}
+
+
+
+.add-product-form {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.add-product-form .form-group {
+    margin-bottom: 15px;
+}
+
+.add-product-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.add-product-form input,
+.add-product-form select,
+.add-product-form textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.add-product-form button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.add-product-form button:hover {
+    background-color: #555;
+}
+
+
+.delete-button {
+    padding: 5px 10px;
+    background-color: #ff4d4d;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.delete-button:hover {
+    background-color: #ff1a1a;
+}
+
+/* Стили для контейнера */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Стили для формы поиска */
+.search-container {
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 20px;
+}
+
+.search-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.search-form input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.search-form button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.search-form button:hover {
+    background-color: #555;
+}
+
+.product-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: flex-start;  /* Выравнивание по левому краю */
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* Стили для каждого товара */
+.product {
+    flex: 0 0 calc(20% - 16px);  /* 5 товаров в строке с учётом отступов */
+    border: 1px solid #ccc;
+    padding: 15px;
+    text-align: center;
+    box-sizing: border-box;
+    max-width: calc(20% - 16px);  /* Ограничение ширины товара */
+    display: flex;
+    flex-direction: column;  /* Элементы внутри карточки располагаются вертикально */
+    height: 450px;  /* Фиксированная высота карточки */
+}
+
+/* Стили для изображения товара */
+.product-image {
+    max-width: 100%;
+    height: 200px;  /* Фиксированная высота изображения */
+    object-fit: cover;  /* Изображение заполняет область без искажений */
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.product h3 {
+    font-size: 1.2em;
+    margin: 10px 0;
+    flex-grow: 1;  /* Название занимает доступное пространство */
+}
+
+
+.product p {
+    font-size: 1.1em;
+    margin: 10px 0;
+}
+
+.product form {
+    margin-top: auto;  /* Кнопка прижимается к нижнему краю карточки */
+}
+
+.product button {
+    width: 100%;  /* Кнопка занимает всю ширину карточки */
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.product button:hover {
+    background-color: #555;
+}
+
+
+
+/* Стили для пагинации */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.pagination a {
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    text-decoration: none;
+    color: #333;
+}
+
+.pagination a.active {
+    background-color: #333;
+    color: #fff;
+}
+
+
+.product-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.edit-button {
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+.edit-button:hover {
+    background-color: #45a049;
+}
+
+.product-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+/* Стили для сетки товаров */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));  /* Автоматическое заполнение строк */
+    gap: 20px;  /* Расстояние между карточками */
+    margin-top: 20px;
+}
+
+/* Стили для карточки товара */
+.product-card {
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 15px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);  /* Тень для карточки */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* Стили для изображения товара */
+.product-card .product-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+/* Стили для деталей товара */
+.product-card .product-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.product-card h4 {
+    font-size: 1.2em;
+    margin: 10px 0;
+}
+
+.product-card p {
+    font-size: 1.1em;
+    margin: 10px 0;
+}
+
+/* Стили для кнопок действий */
+.product-card .product-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.product-card .edit-button {
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+.product-card .edit-button:hover {
+    background-color: #45a049;
+}
+
+.product-card .delete-button {
+    padding: 5px 10px;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.product-card .delete-button:hover {
+    background-color: #ff1a1a;
+}
+
+.product-card p {
+    font-size: 1em;
+    margin: 5px 0;
+    color: #555;
+}
+
+/* Стили для формы редактирования товара */
+.edit-product-form {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+}
+
+.edit-product-form .form-group {
+    margin-bottom: 15px;
+}
+
+.edit-product-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.edit-product-form input,
+.edit-product-form select,
+.edit-product-form textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.edit-product-form button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.edit-product-form button:hover {
+    background-color: #555;
+}
+
+/* Стили для формы фильтрации */
+.filter-form {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 150px;
+}
+
+.filter-form button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.filter-form button:hover {
+    background-color: #555;
+}
+
+/* Стили для контейнера фильтрации */
+.filter-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    align-items: flex-end;
+}
+
+/* Стили для сообщений об ошибках */
+.text-danger {
+    color: red;
+    font-size: 0.9em;
+}
+
+/* Стили для общих сообщений (flash) */
+.flash-messages {
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-danger {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+}
+
+.alert-success {
+    color: #3c763d;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+}
+
+/* Стили для формы */
+.containers {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Чтобы padding не увеличивал ширину */
+}
+
+.btn {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
