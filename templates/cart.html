@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Корзина</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comforter&family=Tiny5&display=swap" rel="stylesheet">
+    <style>
+        .remove-button { background-color: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+        .remove-button:hover { background-color: #ff1a1a; }
+        .total { font-size: 1.2rem; font-weight: bold; margin-top: 20px; text-align: right; }
+        .checkout-button { background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1rem; margin-top: 20px; width: 100%; }
+        .checkout-button:hover { background-color: #45a049; }
+        .empty-cart { text-align: center; padding: 20px; }
+        .empty-cart p { font-size: 1.2rem; color: #555; }
+        .cont-button { background-color: #333; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1rem; margin-top: 20px; width: 100%; }
+        .cont-button:hover { background-color: #555; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="comforter-regular">
+            <h1>BOLSHIE KURTKI</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Главная</a></li>
+                <li><a href="{{ url_for('cont') }}">Контакты</a></li>
+                <li><a href="/catalog">Каталог</a></li>
+                <li><a href="/cart">Корзина</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="container">
+        {% if cart %}
+            <h2>Ваша корзина</h2>
+            <div>
+                {% for item in cart %}
+                    <div class="cart-item">
+                        <span>{{ item.name }} - ₽{{ item.price | float }}</span>
+                        <form action="{{ url_for('remove_from_cart', product_id=item.id) }}" method="POST" style="display:inline;">
+                            <button class="remove-button" type="submit">Удалить</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="total">
+                <p>Товаров в корзине: {{ total_items }}</p>
+                <p>Общая стоимость: ₽{{ total_price | float }}</p>
+            </div>
+            <form action="{{ url_for('checkout') }}" method="GET">
+                <button class="checkout-button" type="submit">Перейти к оплате</button>
+            </form>
+        {% else %}
+            <div class="empty-cart">
+                <p>Ваша корзина пуста</p>
+                <form action="{{ url_for('catalog') }}">
+                    <button class="cont-button" type="submit">Продолжить покупки</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
