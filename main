@@ -13,11 +13,11 @@ from werkzeug.utils import secure_filename
 import re
 
 app = Flask(__name__)
-app.secret_key = '315zxcabc123'  # Секретный ключ для подписи сессии
+app.secret_key = '*****'
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = '3839'
+app.config['MYSQL_PASSWORD'] = '****'
 app.config['MYSQL_DB'] = 'fashion'
 app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
